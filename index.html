@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AETHER 3D - Next-Gen Weather & AI Assistant</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- Atmospheric Canvas Background (For weather particles like rain, snow, sun-rays) -->
+  <canvas id="weather-particles-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="logo">
+        <span class="gradient-text">AETHER</span> <span class="badge">3D</span>
+      </div>
+      <div class="search-bar-container">
+        <div class="search-input-wrapper">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" id="city-search-input" placeholder="Search City (e.g. Mumbai, Tokyo, New York)..." autocomplete="off">
+          <button id="search-btn" class="search-btn">
+            <span class="search-btn-text">Search</span>
+            <i data-lucide="arrow-right" class="arrow-icon"></i>
+          </button>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="ai-chat-toggle" class="header-btn ai-btn glow-btn" title="AI Weather Assistant">
+          <i data-lucide="bot"></i>
+          <span class="btn-label">Ask AI</span>
+        </button>
+        <button id="settings-toggle" class="header-btn secondary-btn" title="Settings">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="dashboard-grid">
+      <!-- 3D Hero Panel (Left / Center) -->
+      <section class="hero-panel-card glass-panel" id="hero-panel">
+        <div class="panel-glow"></div>
+        <div class="threejs-container" id="threejs-orb-container">
+          <!-- Three.js Canvas will be injected here -->
+        </div>
+        
+        <!-- Overlay Weather Stats on the 3D Orb -->
+        <div class="hero-weather-details">
+          <div class="location-badge">
+            <i data-lucide="map-pin"></i>
+            <span id="display-city">Loading...</span>
+          </div>
+          <div class="temperature-main">
+            <span id="display-temp">--</span><span class="deg-symbol">°</span>
+          </div>
+          <div class="weather-condition-wrapper">
+            <span id="display-description">Connecting...</span>
+          </div>
+          <div class="temp-range-badge">
+            <span>H: <span id="display-temp-max">--°</span></span>
+            <span class="divider">|</span>
+            <span>L: <span id="display-temp-min">--°</span></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metrics Panel (Right) -->
+      <section class="metrics-grid">
+        <!-- Card 1: Wind -->
+        <div class="metric-card glass-card tilt-target" id="card-wind">
+          <div class="card-icon-wrapper wind-glow">
+            <i data-lucide="wind"></i>
+          </div>
+          <div class="metric-label">Wind Velocity</div>
+          <div class="metric-value" id="val-wind-speed">-- km/h</div>
+          <div class="metric-sub" id="val-wind-dir">Direction: --</div>
+          <!-- 3D Wind Indicator -->
+          <div class="wind-compass-container">
+            <div class="compass-ring">
+              <span class="dir-n">N</span>
+              <span class="dir-e">E</span>
+              <span class="dir-s">S</span>
+              <span class="dir-w">W</span>
+              <div class="compass-needle" id="compass-needle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Humidity -->
+        <div class="metric-card glass-card tilt-target" id="card-humidity">
+          <div class="card-icon-wrapper humidity-glow">
+            <i data-lucide="droplet"></i>
+          </div>
+          <div class="metric-label">Humidity</div>
+          <div class="metric-value" id="val-humidity">--%</div>
+          <div class="metric-sub" id="val-humidity-sub">Comfortable</div>
+          
+          <!-- Modern Dynamic Liquid Bar -->
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="val-humidity-bar">
+              <div class="progress-wave"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Feels Like & Pressure -->
+        <div class="metric-card glass-card tilt-target" id="card-pressure">
+          <div class="card-icon-wrapper pressure-glow">
+            <i data-lucide="thermometer"></i>
+          </div>
+          <div class="metric-label">Thermal Index</div>
+          <div class="metric-value" id="val-feels-like">--°C</div>
+          <div class="metric-sub" id="val-feels-sub">Feels like actual temperature</div>
+          <div class="pressure-badge-container">
+            <div class="mini-badge">
+              <i data-lucide="gauge"></i>
+              <span id="val-pressure">-- hPa</span>
+            </div>
+            <div class="mini-badge">
+              <i data-lucide="eye"></i>
+              <span id="val-visibility">-- km</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Forecast / Aura -->
+        <div class="metric-card glass-card tilt-target" id="card-aura">
+          <div class="card-icon-wrapper aura-glow">
+            <i data-lucide="sparkles"></i>
+          </div>
+          <div class="metric-label">Weather Aura</div>
+          <div class="metric-value" id="val-aura-status">Calm</div>
+          <div class="metric-sub" id="val-aura-desc">Atmospheric stability is high.</div>
+          <!-- Dynamic Aura Ripple animation -->
+          <div class="aura-ripple-container">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings Drawer / Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3><i data-lucide="sliders-horizontal"></i> Configuration Panel</h3>
+        <button id="settings-close" class="close-btn"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p class="settings-desc">Provide your keys to unlock real-time global weather and interactive AI Chat. Keys are saved securely in your browser's local storage.</p>
+        
+        <div class="input-group">
+          <label for="weather-key-input">OpenWeatherMap API Key</label>
+          <div class="password-wrapper">
+            <input type="password" id="weather-key-input" placeholder="Enter OpenWeatherMap API Key...">
+            <button class="toggle-password" type="button" tabindex="-1"><i data-lucide="eye-off"></i></button>
+          </div>
+          <small class="helper-text">Get a free key from <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer">openweathermap.org</a></small>
+        </div>
+
+        <div class="input-group">
+          <label for="groq-key-input">Groq API Key</label>
+          <div class="password-wrapper">
+            <input type="password" id="groq-key-input" placeholder="Enter Groq API Key...">
+            <button class="toggle-password" type="button" tabindex="-1"><i data-lucide="eye-off"></i></button>
+          </div>
+          <small class="helper-text">Get a Groq API key from <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer">console.groq.com</a></small>
+        </div>
+
+        <div class="settings-status-card">
+          <div class="status-title">Status:</div>
+          <div class="status-item">
+            <span class="status-dot" id="weather-status-dot"></span>
+            <span>Weather API: <strong id="weather-status-text">Demo Mode</strong></span>
+          </div>
+          <div class="status-item">
+            <span class="status-dot" id="groq-status-dot"></span>
+            <span>AI Engine (Groq): <strong id="groq-status-text">Demo Mode</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="settings-save-btn" class="save-btn glow-btn">Save Configurations</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Weather Assistant Side Drawer -->
+  <div id="ai-chat-drawer" class="chat-drawer glass-panel">
+    <div class="drawer-header">
+      <div class="assistant-profile">
+        <div class="avatar-glow">
+          <i data-lucide="bot" class="avatar-icon"></i>
+        </div>
+        <div class="assistant-info">
+          <h4>Aura Weather AI</h4>
+          <span class="assistant-status" id="ai-engine-badge"><i data-lucide="activity"></i> Demo Mode</span>
+        </div>
+      </div>
+      <button id="ai-chat-close" class="close-btn"><i data-lucide="x"></i></button>
+    </div>
+
+    <!-- Chat Messages Viewport -->
+    <div class="chat-messages-container" id="chat-messages">
+      <div class="message assistant-message">
+        <div class="msg-bubble">
+          Hello! I am **Aura**, your intelligent weather agent. Ask me anything about the weather in any city (e.g. *What's the weather in Mumbai?* or *Should I bring an umbrella to London?*).
+          <br><br>
+          I can dynamically execute weather inquiries using my integrated tools!
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools executing indicator -->
+    <div class="tool-executing-indicator hidden" id="tool-indicator">
+      <i data-lucide="cpu" class="spinning"></i>
+      <span id="tool-indicator-text">Executing tool: get_weather("Mumbai")...</span>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="drawer-footer">
+      <div class="chat-input-wrapper">
+        <input type="text" id="chat-input" placeholder="Ask about weather conditions..." autocomplete="off">
+        <button id="chat-send-btn" class="chat-send-btn">
+          <i data-lucide="send"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application script -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
